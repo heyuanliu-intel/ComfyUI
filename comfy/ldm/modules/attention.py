@@ -403,6 +403,8 @@ def attention_pytorch(q, k, v, heads, mask=None, attn_precision=None, skip_resha
             lambda t: t.view(b, -1, heads, dim_head).transpose(1, 2),
             (q, k, v),
         )
+    if mask != None:
+        mask = mask.unsqueeze(0).unsqueeze(0)
 
     out = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False)
     out = (

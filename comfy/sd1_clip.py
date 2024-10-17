@@ -198,7 +198,7 @@ class SDClipModel(torch.nn.Module, ClipTokenWeightEncoder):
         if self.enable_attention_masks:
             attention_mask_model = attention_mask
 
-        outputs = self.transformer(tokens, attention_mask_model, intermediate_output=self.layer_idx, final_layer_norm_intermediate=self.layer_norm_hidden_state, dtype=torch.float32)
+        outputs = self.transformer(tokens, attention_mask_model, intermediate_output=self.layer_idx, final_layer_norm_intermediate=self.layer_norm_hidden_state, dtype=torch.bfloat16)
         self.transformer.set_input_embeddings(backup_embeds)
 
         if self.layer == "last":
