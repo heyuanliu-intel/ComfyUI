@@ -455,6 +455,10 @@ class DPMSolver(nn.Module):
 
             x = x + su * s_noise * noise_sampler(self.sigma(t), self.sigma(t_next))
 
+            if model_management.is_intel_hpu():
+                import habana_frameworks.torch.core as htcore
+                htcore.mark_step()
+
         return x
 
     def dpm_solver_adaptive(self, x, t_start, t_end, order=3, rtol=0.05, atol=0.0078, h_init=0.05, pcoeff=0., icoeff=1., dcoeff=0., accept_safety=0.81, eta=0., s_noise=1., noise_sampler=None):
@@ -508,6 +512,10 @@ class DPMSolver(nn.Module):
             if self.info_callback is not None:
                 self.info_callback({'x': x, 'i': info['steps'] - 1, 't': s, 't_up': s, 'denoised': denoised, 'error': error, 'h': pid.h, **info})
 
+            if model_management.is_intel_hpu():
+                import habana_frameworks.torch.core as htcore
+                htcore.mark_step()
+
         return x, info
 
 
@@ -520,9 +528,6 @@ def sample_dpm_fast(model, x, sigma_min, sigma_max, n, extra_args=None, callback
         dpm_solver = DPMSolver(model, extra_args, eps_callback=pbar.update)
         if callback is not None:
             dpm_solver.info_callback = lambda info: callback({'sigma': dpm_solver.sigma(info['t']), 'sigma_hat': dpm_solver.sigma(info['t_up']), **info})
-        if model_management.is_intel_hpu():
-            import habana_frameworks.torch.core as htcore
-            htcore.mark_step()
         return dpm_solver.dpm_solver_fast(x, dpm_solver.t(torch.tensor(sigma_max)), dpm_solver.t(torch.tensor(sigma_min)), n, eta, s_noise, noise_sampler)
 
 
@@ -536,9 +541,6 @@ def sample_dpm_adaptive(model, x, sigma_min, sigma_max, extra_args=None, callbac
         if callback is not None:
             dpm_solver.info_callback = lambda info: callback({'sigma': dpm_solver.sigma(info['t']), 'sigma_hat': dpm_solver.sigma(info['t_up']), **info})
         x, info = dpm_solver.dpm_solver_adaptive(x, dpm_solver.t(torch.tensor(sigma_max)), dpm_solver.t(torch.tensor(sigma_min)), order, rtol, atol, h_init, pcoeff, icoeff, dcoeff, accept_safety, eta, s_noise, noise_sampler)
-        if model_management.is_intel_hpu():
-            import habana_frameworks.torch.core as htcore
-            htcore.mark_step()
     if return_info:
         return x, info
     return x
